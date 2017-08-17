@@ -1,0 +1,8 @@
+[package]
+name = "vpn"
+version = "0.1.0"
+authors = ["Povilas Balciunas <balciunas90@gmail.com>"]
+
+[dependencies]
+nix = "0.8.0"
+libc = "0.2.29"
