@@ -5,41 +5,24 @@ use std::io;
 
 use nix::fcntl;
 use nix::sys::stat::Mode;
-use libc::{ioctl, IF_NAMESIZE};
+
+mod tuntap;
 
 const TUNSETIFF : u64 = 0x400454ca;
 
-enum VirtualDeviceType {
-    Tun = 1,
-    Tap = 2,
-}
-
-#[repr(C)]
-struct InterfaceRequest {
-    name: [u8; IF_NAMESIZE],
-    flags: u16,
-}
-
-impl InterfaceRequest {
-    fn with_name(name: &str) -> InterfaceRequest {
-        let mut ifreq = InterfaceRequest {
-            name: [0; IF_NAMESIZE],
-            flags: VirtualDeviceType::Tun as u16
-        };
-        for (i, c) in name.as_bytes().iter().take(IF_NAMESIZE).enumerate() {
-            ifreq.name[i] = *c;
+fn create_vnet_device(tun_file: i32, name: &str) -> Result<i32, i32> {
+    let ifreq = tuntap::InterfaceRequest::with_name(name);
+    unsafe {
+        match libc::ioctl(tun_file, TUNSETIFF, &ifreq) {
+            -1 => Err(-1),
+            _ => Ok(0),
         }
-        ifreq
     }
 }
 
 fn main() {
     let fid = fcntl::open("/dev/net/tun", fcntl::O_RDWR, Mode::empty()).unwrap();
-    let ifreq = InterfaceRequest::with_name("tun0");
-    unsafe {
-        let ret = ioctl(fid, TUNSETIFF, &ifreq);
-        println!("{}", ret);
-    }
+    create_vnet_device(fid, "tun0");
 
     let mut ln = String::new();
     io::stdin().read_line(&mut ln);
