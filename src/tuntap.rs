@@ -37,7 +37,14 @@ impl Device {
     }
 }
 
-const TUNSETIFF : u64 = 0x400454ca;
+// ioctl request to setup new tun/tap interface.
+const TUNSETIFF: u64 = 0x400454ca;
+
+// IFF_NO_PI tells the kernel to not provide packet information. The purpose of
+// IFF_NO_PI is to tell the kernel that packets will be "pure" IP packets, with
+// no added bytes. Otherwise (if IFF_NO_PI is unset), 4 extra bytes are added
+// to the beginning of the packet (2 flag bytes and 2 protocol bytes).
+const IFF_NO_PI: u16 = 0x1000;
 
 fn create_vnet_device(tun_file: i32, name: &str) -> Result<i32, i32> {
     let ifreq = InterfaceRequest::with_name(name);
@@ -64,7 +71,7 @@ impl InterfaceRequest {
     fn with_name(name: &str) -> InterfaceRequest {
         let mut ifreq = InterfaceRequest {
             name: [0; IF_NAMESIZE],
-            flags: VirtualDeviceType::Tun as u16
+            flags: VirtualDeviceType::Tun as u16 | IFF_NO_PI,
         };
         for (i, c) in name.as_bytes().iter().take(IF_NAMESIZE).enumerate() {
             ifreq.name[i] = *c;
