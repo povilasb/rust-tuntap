@@ -49,19 +49,19 @@ fn create_vnet_device(tun_file: i32, name: &str) -> Result<i32, i32> {
     }
 }
 
-pub enum VirtualDeviceType {
+enum VirtualDeviceType {
     Tun = 1,
     Tap = 2,
 }
 
 #[repr(C)]
-pub struct InterfaceRequest {
+struct InterfaceRequest {
     name: [u8; IF_NAMESIZE],
     flags: u16,
 }
 
 impl InterfaceRequest {
-    pub fn with_name(name: &str) -> InterfaceRequest {
+    fn with_name(name: &str) -> InterfaceRequest {
         let mut ifreq = InterfaceRequest {
             name: [0; IF_NAMESIZE],
             flags: VirtualDeviceType::Tun as u16
