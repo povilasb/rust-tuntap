@@ -1,16 +1,11 @@
 extern crate nix;
 extern crate libc;
-extern crate pnetlink;
 
 use std::io;
-use std::net::Ipv4Addr;
-use std::str::FromStr;
+use std::process::Command;
 
 use nix::fcntl;
 use nix::sys::stat::Mode;
-use pnetlink::packet::netlink::NetlinkConnection;
-use pnetlink::packet::route::link::{Links};
-use pnetlink::packet::route::addr::{IpAddr, Scope, Addresses};
 
 mod tuntap;
 
@@ -30,13 +25,15 @@ fn main() {
     let fid = fcntl::open("/dev/net/tun", fcntl::O_RDWR, Mode::empty()).unwrap();
     create_vnet_device(fid, "tun0");
 
-    let mut conn = NetlinkConnection::new();
-    let link = conn.get_link_by_name("tun0").unwrap().unwrap();
-    println!("{}", link.get_index());
+    Command::new("ip")
+        .args(&["addr", "add", "10.0.0.0/24", "dev", "tun0"])
+        .spawn()
+        .expect("Failed to assign IP address.");
 
-    conn.add_addr(&link, IpAddr::V4(Ipv4Addr::from_str("10.0.0.2").unwrap()),
-                  Scope::Link);
-    conn.link_set_up(link.get_index()).unwrap();
+    Command::new("ip")
+        .args(&["link", "set", "dev", "tun0", "up"])
+        .spawn()
+        .expect("Failed to set interface up");
 
     let mut ln = String::new();
     io::stdin().read_line(&mut ln);

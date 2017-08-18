@@ -6,4 +6,3 @@ authors = ["Povilas Balciunas <balciunas90@gmail.com>"]
 [dependencies]
 nix = "0.8.0"
 libc = "0.2.29"
-pnetlink = { git = "https://github.com/polachok/pnetlink" }
