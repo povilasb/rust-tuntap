@@ -2,6 +2,9 @@ use libc::IF_NAMESIZE;
 use libc;
 
 use std::process::Command;
+use std::fs::File;
+use std::os::unix::io::FromRawFd;
+use std::io::Read;
 
 use nix::fcntl;
 use nix::sys::stat::Mode;
@@ -34,7 +37,22 @@ impl Device {
             .args(&["link", "set", "dev", dev_name, "up"])
             .spawn()
             .expect("Failed to set interface up");
+
+        let mut ftun = unsafe { File::from_raw_fd(fid) };
+        let mut buf = [0u8; 1500];
+        while true {
+            let bytes_read = ftun.read(&mut buf).unwrap();
+            print_arr(&buf, bytes_read);
+        }
     }
+}
+
+fn print_arr(arr: &[u8], bytes: usize) {
+    for  i in arr.iter().take(bytes) {
+        print!("\\{:x}", i);
+    }
+    println!();
+    println!();
 }
 
 // ioctl request to setup new tun/tap interface.
